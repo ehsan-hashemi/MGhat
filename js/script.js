@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // تنظیمات Supabase
 const supabaseUrl = 'https://inmtfqmhyqejuqhjgkhh.supabase.co'; // URL پروژه Supabase
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubXRmcW1oeXFlanVxaGpna2hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxODUxNjQsImV4cCI6MjA1ODc2MTE2NH0.mo-F_DDb6W4khZfNGtv6CtRi-AwkUNuyZ5VcHbRuNbA'; // کلید عمومی از تنظیمات پروژه Supabase
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubXRmcW1oeXFlanVxaGpna2hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxODUxNjQsImV4cCI6MjA1ODc2MTE2NH0.mo-F_DDb6W4khZfNGtv6CtRi-AwkUNuyZ5VcHbRuNbA'; // کلید عمومی (Anon Key) از تنظیمات پروژه Supabase
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // تابع کمکی برای دسترسی به المنت‌ها با استفاده از شناسه
@@ -10,9 +10,12 @@ function $(id) {
   return document.getElementById(id);
 }
 
-// بررسی صفحه جاری: اگر فرم ورود وجود داشته باشد، کد ورود اجرا می‌شود.
+/*
+  اگر المنت با شناسه "login-form" وجود داشته باشد،
+  فرض می‌کنیم این صفحه مربوط به ورود/ثبت‌نام کاربر است.
+*/
 if ($('login-form')) {
-  // ثبت‌نام کاربران و ورود به سیستم
+  // ثبت‌نام کاربران
   $('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -24,7 +27,7 @@ if ($('login-form')) {
       const user = { fullname, username, phone };
 
       try {
-        // ذخیره اطلاعات کاربر در دیتابیس Supabase
+        // ذخیره اطلاعات کاربر در دیتابیس Supabase (جدول "users")
         const { data, error } = await supabase
           .from('users')
           .insert([user]);
@@ -47,19 +50,22 @@ if ($('login-form')) {
   });
 }
 
-// بررسی صفحه چت: اگر عنصری با شناسه chat-list یافت شود، کد صفحه چت اجرا می‌شود.
+/*
+  اگر المنت با شناسه "chat-list" وجود داشته باشد،
+  فرض می‌کنیم این فایل در صفحه چت استفاده می‌شود.
+*/
 if ($('chat-list')) {
-  // اطمینان از ورود کاربر (وجود اطلاعات در localStorage)
+  // اطمینان از ورود کاربر: اگر اطلاعات کاربر در localStorage نباشد، به صفحه ورود هدایت می‌کنیم.
   const storedUser = localStorage.getItem('currentUser');
   if (!storedUser) {
     window.location.href = "../pages/login.html";
-  } else {
-    const user = JSON.parse(storedUser);
-    // نمایش پیام خوشامدگویی با نام کاربر
-    $('user-greeting').textContent = `خوش آمدید، ${user.fullname}`;
   }
+  
+  const user = JSON.parse(storedUser);
+  // نمایش پیام خوشامدگویی شامل نام کاربر
+  $('user-greeting').textContent = `خوش آمدید، ${user.fullname}`;
 
-  // خروج از سیستم
+  // خروج از سیستم: حذف اطلاعات کاربر از localStorage
   $('logout').addEventListener('click', () => {
     localStorage.removeItem('currentUser');
     window.location.href = "../pages/login.html";
@@ -72,11 +78,12 @@ if ($('chat-list')) {
     const fileInput = $('file-upload');
     let fileUrl = null;
 
-    // بررسی آپلود فایل (مثلاً استیکر یا مدیا)
+    // اگر فایل انتخاب شده داشته باشد (مثل استیکر یا مدیا)
     if (fileInput.files && fileInput.files[0]) {
       const file = fileInput.files[0];
       const fileName = `${new Date().getTime()}-${file.name}`;
-      // آپلود فایل به Supabase Storage؛ توجه کنید که باید باکت "uploads" از قبل ایجاد شده باشد.
+      
+      // آپلود فایل به Supabase Storage (باکت 'uploads' باید از قبل ایجاد شده باشد)
       const { data: fileData, error: fileError } = await supabase
         .storage
         .from('uploads')
@@ -95,13 +102,12 @@ if ($('chat-list')) {
         .publicURL;
     }
 
-    // درج پیام در جدول 'messages'
+    // درج پیام در دیتابیس Supabase (جدول "messages")
     try {
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
       const { data, error } = await supabase
         .from('messages')
         .insert([{
-          sender: currentUser.username,
+          sender: user.username,
           recipient: recipient,
           message: messageText,
           file_url: fileUrl,
@@ -117,7 +123,6 @@ if ($('chat-list')) {
       $('message-text').value = "";
       $('file-upload').value = "";
       alert("پیام ارسال شد!");
-      // به‌روزرسانی تاریخچه چت
       loadChatMessages();
     } catch (err) {
       console.error("خطای غیرمنتظره:", err);
@@ -125,7 +130,7 @@ if ($('chat-list')) {
     }
   });
 
-  // بارگذاری تاریخچه چت
+  // تابعی برای بارگذاری تاریخچه چت از دیتابیس
   async function loadChatMessages() {
     try {
       const { data: messages, error } = await supabase
@@ -171,7 +176,7 @@ if ($('chat-list')) {
   }
   loadFavoriteStickers();
 
-  // قابلیت تغییر تم: دریافت فایل تم و اعمال آن به صفحه (فرض بر این است که فایل دارای CSS custom properties است)
+  // قابلیت تغییر تم: بارگذاری فایل تم از کاربر و اعمال آن به صفحه
   $('apply-theme').addEventListener('click', () => {
     const themeFileInput = $('theme-file');
     if (themeFileInput.files && themeFileInput.files[0]) {
