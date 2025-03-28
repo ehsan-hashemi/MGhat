@@ -12,9 +12,9 @@
     <img src="urlsa/logo.png" alt="Logo">
   </footer>
   <script>
-    const user = localStorage.getItem('currentUser');
-    if (user) {
-      window.location.href = "pages/chat.html";
+    // اگر کاربر وارد شده باشد، به صفحه لیست چت هدایت شود.
+    if (localStorage.getItem('currentUser')) {
+      window.location.href = "pages/chat-list.html";
     } else {
       window.location.href = "pages/login.html";
     }

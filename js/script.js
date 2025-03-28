@@ -5,12 +5,14 @@ const supabaseUrl = 'https://inmtfqmhyqejuqhjgkhh.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubXRmcW1oeXFlanVxaGpna2hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxODUxNjQsImV4cCI6MjA1ODc2MTE2NH0.mo-F_DDb6W4khZfNGtv6CtRi-AwkUNuyZ5VcHbRuNbA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// تابع کمکی برای انتخاب المنت‌ها
+// تابع کمکی برای انتخاب المنت
 function $(id) {
   return document.getElementById(id);
 }
 
-/* --------- بخش ورود (Login) --------- */
+/* ---------------------------
+   صفحه ورود (login.html)
+---------------------------- */
 if ($("login-form")) {
   $("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -25,7 +27,7 @@ if ($("login-form")) {
     }
     
     try {
-      // بررسی وجود کاربری با شماره تلفن یا نام کاربری مورد استفاده
+      // بررسی وجود کاربری با شماره تلفن یا نام کاربری مشابه
       const { data: existingUsers, error: fetchError } = await supabase
         .from("users")
         .select("*")
@@ -36,11 +38,11 @@ if ($("login-form")) {
         return;
       }
       
-      // بررسی تضاد: اگر شماره یا نام کاربری تکراری است اما با اطلاعات وارد شده مطابقت ندارد
-      const phoneConflict = existingUsers.some((user) =>
+      // بررسی تضاد اطلاعات (برای جلوگیری از تکرار ناصحیح)
+      const phoneConflict = existingUsers.some(user =>
         user.phone === phone && (user.username !== username || user.fullname !== fullname)
       );
-      const usernameConflict = existingUsers.some((user) =>
+      const usernameConflict = existingUsers.some(user =>
         user.username === username && (user.phone !== phone || user.fullname !== fullname)
       );
       
@@ -49,7 +51,7 @@ if ($("login-form")) {
         return;
       }
       
-      // ثبت اطلاعات کاربر در جدول users
+      // ثبت نام کاربر
       const { data, error: insertError } = await supabase
         .from("users")
         .insert([{ fullname, username, phone }]);
@@ -59,11 +61,9 @@ if ($("login-form")) {
         return;
       }
       
-      // ذخیره کاربر در localStorage به عنوان نشانه ورود موفق
       localStorage.setItem("currentUser", JSON.stringify({ fullname, username, phone }));
-      // هدایت به صفحه چت
-      window.location.href = "../pages/chat.html";
-      
+      // پس از موفقیت، هدایت به صفحه لیست چت
+      window.location.href = "MGhat/pages/chat-list.html";
     } catch (err) {
       console.error("خطای ثبت نام:", err);
       alert("ثبت نام با خطا مواجه شد!");
@@ -71,35 +71,92 @@ if ($("login-form")) {
   });
 }
 
-/* --------- بخش چت (Chat) --------- */
-if ($("chat-list")) {
+/* ---------------------------
+   صفحه لیست چت (chat-list.html)
+---------------------------- */
+if ($("contact-list")) {
   // اطمینان از ورود کاربر
   const storedUser = localStorage.getItem("currentUser");
   if (!storedUser) {
-    window.location.href = "../pages/login.html";
+    window.location.href = "login.html";
   }
-  const user = JSON.parse(storedUser);
-  
-  // نمایش پیام خوشامدگویی
-  $("user-greeting").textContent = `خوش آمدید، ${user.fullname}`;
+  const currentUser = JSON.parse(storedUser);
+  $("user-greeting").textContent = `خوش آمدید، ${currentUser.fullname}`;
   
   // دکمه خروج
   $("logout").addEventListener("click", () => {
     localStorage.removeItem("currentUser");
-    window.location.href = "../pages/login.html";
+    window.location.href = "login.html";
+  });
+  
+  // دریافت لیست کاربران (مخاطبین) به جز خود
+  async function loadContacts() {
+    try {
+      const { data: users, error } = await supabase
+        .from("users")
+        .select("*")
+        .neq("username", currentUser.username);
+      if (error) {
+        console.error("خطا در دریافت مخاطبین:", error);
+        return;
+      }
+      const contactList = $("contact-list");
+      contactList.innerHTML = "";
+      users.forEach(user => {
+        const li = document.createElement("li");
+        li.textContent = `${user.fullname} (@${user.username})`;
+        // با کلیک روی مخاطب، به صفحه گفتگو بروید. مخاطب به عنوان پارامتر در URL قرار می‌گیرد.
+        li.addEventListener("click", () => {
+          window.location.href = `chat.html?contact=${user.username}&fullname=${encodeURIComponent(user.fullname)}`;
+        });
+        contactList.appendChild(li);
+      });
+    } catch (err) {
+      console.error("خطا در بارگذاری مخاطبین:", err);
+    }
+  }
+  loadContacts();
+}
+
+/* ---------------------------
+   صفحه گفتگو (chat.html)
+---------------------------- */
+if ($("conversation")) {
+  // اطمینان از ورود کاربر
+  const storedUser = localStorage.getItem("currentUser");
+  if (!storedUser) {
+    window.location.href = "login.html";
+  }
+  const currentUser = JSON.parse(storedUser);
+  
+  // دریافت پارامتر مخاطب از URL
+  const params = new URLSearchParams(window.location.search);
+  const contactUsername = params.get("contact");
+  const contactFullname = params.get("fullname") || contactUsername;
+  
+  if (!contactUsername) {
+    alert("مخاطب مشخص نشده است!");
+    window.location.href = "chat-list.html";
+  }
+  
+  $("user-greeting").textContent = `خوش آمدید، ${currentUser.fullname}`;
+  $("contact-name").textContent = contactFullname;
+  
+  // دکمه خروج
+  $("logout").addEventListener("click", () => {
+    localStorage.removeItem("currentUser");
+    window.location.href = "login.html";
+  });
+  // دکمه بازگشت به لیست چت
+  $("back-to-list").addEventListener("click", () => {
+    window.location.href = "chat-list.html";
   });
   
   // ارسال پیام
   $("send").addEventListener("click", async () => {
-    const recipient = $("recipient").value.trim();
     const messageText = $("message-text").value.trim();
     const fileInput = $("file-upload");
     let fileUrl = null;
-    
-    if (!recipient) {
-      alert("لطفاً نام کاربری گیرنده را وارد کنید!");
-      return;
-    }
     
     if (!messageText && (!fileInput.files || fileInput.files.length === 0)) {
       alert("لطفاً پیام تایپ کنید یا یک فایل انتخاب کنید!");
@@ -114,61 +171,59 @@ if ($("chat-list")) {
         .storage
         .from("uploads")
         .upload(fileName, file);
-      
       if (fileError) {
         console.error("خطا در آپلود فایل:", fileError);
         alert("خطا در آپلود فایل: " + fileError.message);
         return;
       }
-      fileUrl = supabase.storage.from("uploads").getPublicUrl(fileName).publicURL;
+      fileUrl = supabase
+        .storage
+        .from("uploads")
+        .getPublicUrl(fileName)
+        .publicURL;
     }
     
     try {
-      // درج پیام در جدول messages
       const { data, error } = await supabase
         .from("messages")
         .insert([{
-          sender: user.username,
-          recipient: recipient,
+          sender: currentUser.username,
+          recipient: contactUsername,
           message: messageText,
           file_url: fileUrl,
           created_at: new Date()
         }]);
-      
       if (error) {
         console.error("خطا در ارسال پیام:", error);
         alert("خطا در ارسال پیام: " + error.message);
         return;
       }
-      
       $("message-text").value = "";
       $("file-upload").value = "";
-      alert("پیام ارسال شد!");
-      loadChatMessages();
+      loadConversation();
     } catch (err) {
       console.error("خطای ارسال پیام:", err);
       alert("خطایی در ارسال پیام رخ داده است!");
     }
   });
   
-  // تابع بارگذاری تاریخچه چت
-  async function loadChatMessages() {
+  // تابع بارگذاری گفتگو
+  async function loadConversation() {
     try {
-      const { data: messages, error: fetchError } = await supabase
+      const { data: messages, error } = await supabase
         .from("messages")
         .select("*")
+        .or(`(sender.eq.${currentUser.username},recipient.eq.${contactUsername}),(sender.eq.${contactUsername},recipient.eq.${currentUser.username})`)
         .order("created_at", { ascending: true });
-      
-      if (fetchError) {
-        console.error("خطا در دریافت پیام‌ها:", fetchError);
+      if (error) {
+        console.error("خطا در دریافت پیام‌ها:", error);
         return;
       }
-      
       const chatList = $("chat-list");
       chatList.innerHTML = "";
-      messages.forEach((msg) => {
+      messages.forEach(msg => {
         const li = document.createElement("li");
-        li.textContent = `[${new Date(msg.created_at).toLocaleTimeString()}] ${msg.sender} -> ${msg.recipient}: ${msg.message}`;
+        li.innerHTML = `<strong>${msg.sender}:</strong> ${msg.message} <br><small>${new Date(msg.created_at).toLocaleString()}</small>`;
         if (msg.file_url) {
           const mediaLink = document.createElement("a");
           mediaLink.href = msg.file_url;
@@ -180,38 +235,34 @@ if ($("chat-list")) {
         chatList.appendChild(li);
       });
     } catch (err) {
-      console.error("خطا در بارگذاری پیام‌ها:", err);
+      console.error("خطا در بارگذاری گفتگو:", err);
     }
   }
   
-  // بارگذاری اولیه تاریخچه چت و به‌روزرسانی دوره‌ای هر ۵ ثانیه
-  loadChatMessages();
-  setInterval(loadChatMessages, 5000);
+  // بارگذاری اولیه گفتگو و به‌روزرسانی دوره‌ای
+  loadConversation();
+  setInterval(loadConversation, 5000);
   
-  // نمایش استیکرهای مورد علاقه (به عنوان مثال ساده)
-  function loadFavoriteStickers() {
-    const favoriteList = $("favorite-list");
-    favoriteList.innerHTML = `<li>استیکر 1</li><li>استیکر 2</li>`;
+  // (اختیاری) قابلیت تغییر تم در صفحه گفتگو (می‌توانید از همان کد صفحه چت استفاده کنید)
+  // اینجا مثال ساده‌ای از تغییر تم آورده شده
+  // فرض کنید یک دکمه با شناسه apply-theme در صفحه وجود دارد.
+  if ($("apply-theme")) {
+    $("apply-theme").addEventListener("click", () => {
+      const themeFileInput = $("theme-file");
+      if (themeFileInput.files && themeFileInput.files[0]) {
+        const file = themeFileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const themeData = e.target.result;
+          const style = document.createElement("style");
+          style.innerHTML = themeData;
+          document.head.appendChild(style);
+          alert("تم به‌کار گرفته شد!");
+        };
+        reader.readAsText(file);
+      } else {
+        alert("لطفاً یک فایل تم انتخاب کنید.");
+      }
+    });
   }
-  loadFavoriteStickers();
-  
-  // تغییر تم: دریافت فایل تم از کاربر و افزودن استایل مربوط به آن به صفحه.
-  $("apply-theme").addEventListener("click", () => {
-    const themeFileInput = $("theme-file");
-    if (themeFileInput.files && themeFileInput.files[0]) {
-      const file = themeFileInput.files[0];
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const themeData = e.target.result;
-        // ایجاد یک المنت <style> و افزودن CSS خوانده شده
-        const style = document.createElement("style");
-        style.innerHTML = themeData;
-        document.head.appendChild(style);
-        alert("تم به‌کار گرفته شد!");
-      };
-      reader.readAsText(file);
-    } else {
-      alert("لطفاً یک فایل تم انتخاب کنید.");
-    }
-  });
 }

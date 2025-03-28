@@ -3,24 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>M - Chat Conversation</title>
+  <title>M - Chat List</title>
   <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
   <div class="chat-container">
     <div class="user-info">
       <p id="user-greeting"></p>
-      <button id="back-to-list">بازگشت به لیست چت</button>
       <button id="logout">خروج</button>
     </div>
-    <div id="conversation">
-      <h3>گفتگو با <span id="contact-name"></span></h3>
-      <ul id="chat-list"></ul>
-    </div>
-    <div class="chat-box">
-      <input type="text" id="message-text" placeholder="پیام خود را تایپ کنید">
-      <input type="file" id="file-upload" accept=".webp, .gif, .jpg, .mp4">
-      <button id="send">ارسال پیام</button>
+    <div class="chat-list-container">
+      <h3>مخاطبین:</h3>
+      <ul id="contact-list"></ul>
     </div>
   </div>
   <footer>
