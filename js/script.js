@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // تنظیمات Supabase
 const supabaseUrl = 'https://inmtfqmhyqejuqhjgkhh.supabase.co'; // URL پروژه Supabase
-const supabaseKey = 'YOUR_ACTUAL_ANON_KEY'; // کلید عمومی (Anon Key) از تنظیمات پروژه Supabase
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubXRmcW1oeXFlanVxaGpna2hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxODUxNjQsImV4cCI6MjA1ODc2MTE2NH0.mo-F_DDb6W4khZfNGtv6CtRi-AwkUNuyZ5VcHbRuNbA'; // کلید عمومی (Anon Key) از تنظیمات پروژه Supabase
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // تابع کمکی برای دسترسی آسان به المنت‌ها
