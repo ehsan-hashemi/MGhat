@@ -74,7 +74,7 @@ if ($("login-form")) {
           JSON.stringify({ fullname, username, phone })
         );
         // هدایت به صفحه چت
-        window.location.href = "../pages/chat.html";
+        window.location.href = "MGhat/pages/chat.html";
       } catch (err) {
         console.error("Error during registration:", err);
         alert("ثبت نام با خطا مواجه شد!");
