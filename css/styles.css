@@ -5,90 +5,119 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
+    direction: rtl;
     color: #333;
   }
   
-  /* Login and Chat Containers */
+  /* Containers */
   .login-container, .chat-container {
-    background: white;
+    background: #fff;
     padding: 20px;
     border-radius: 10px;
     width: 95%;
     max-width: 600px;
-    margin: auto;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     animation: fadeIn 0.5s ease-in-out;
   }
   
-  /* Form and Input Fields */
-  input, textarea, button {
-    display: block;
-    width: 90%;
-    margin: 10px auto;
+  /* فرم ورود */
+  .login-container form input,
+  .login-container form button {
+    width: 100%;
     padding: 10px;
+    margin: 10px 0;
     border-radius: 5px;
     border: 1px solid #ccc;
   }
   
-  textarea {
-    height: 80px;
-  }
-  
-  button {
+  .login-container form button {
     background-color: #007BFF;
-    color: white;
+    color: #fff;
     border: none;
     cursor: pointer;
-    padding: 10px 20px;
-    border-radius: 5px;
   }
   
-  button:hover {
+  .login-container form button:hover {
     background-color: #0056b3;
   }
   
-  /* Chat History */
-  .chat-box, .chat-history, .favorite-stickers, .theme-upload {
-    margin: 20px 0;
+  /* بخش چت */
+  .chat-container .user-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   
-  ul#chat-list, ul#favorite-list {
+  .chat-container .chat-box input,
+  .chat-container .chat-box textarea,
+  .chat-container .chat-box button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  
+  .chat-container .chat-box button {
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .chat-container .chat-box button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* تاریخچه چت */
+  .chat-history ul {
+    list-style: none;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .chat-history ul li {
+    background: #f9f9f9;
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background 0.3s;
+  }
+  
+  .chat-history ul li:hover {
+    background: #ececec;
+  }
+  
+  /* استیکرها و تم */
+  .favorite-stickers ul, .theme-upload {
+    margin-top: 20px;
+  }
+  
+  .favorite-stickers ul {
     list-style: none;
     padding: 0;
   }
   
-  ul#chat-list li, ul#favorite-list li {
-    margin-bottom: 15px;
-    padding: 10px;
-    background-color: #f9f9f9;
+  .favorite-stickers ul li {
+    display: inline-block;
+    margin: 5px;
+    padding: 5px;
+    border: 1px solid #ccc;
     border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
-  ul#chat-list li:hover, ul#favorite-list li:hover {
-    transform: scale(1.02);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  }
-  
-  /* Chat Media */
-  .chat-media {
-    display: block;
-    max-width: 100%;
-    margin-top: 10px;
-    border-radius: 5px;
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 15px;
   }
   
   /* Animations */
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }  
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
